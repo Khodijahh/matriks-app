@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>KALKULATOR MATRIKS BY SITI KHOTIJAH</title>
+  <style>
+    body {
+      background-image: url("gambar.jpeg");
+      background-size: 900px;
+      font-family: 'Segoe UI', sans-serif;
+      color: #521C0D;
+      margin: 0;
+      padding-top: 20px;
+    }
+
+    h1, h2 {
+      margin: 0;
+      margin-top: 5px;
+      text-align: center;
+
+    }
+
+    h2 {
+      margin-bottom: 10px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: auto;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 10px;
+      border-radius: 12px;
+      text-align: center;
+    }
+
+    select, button {
+      margin: 5px 3px;
+      padding: 6px 12px;
+      border: none;
+      background-color: #FB9E3A;
+      color: #000000;
+      font-weight: bold;
+      cursor: pointer;
+      border-radius: 8px;
+    }
+
+    button:hover {
+      background-color: #B2D8CE;
+    }
+
+    .matrix-input {
+      margin-bottom: 10px;
+    }
+
+    .matrix-grid {
+      width: 200px;
+      margin-top: 5px;
+      margin-bottom: 5px;
+      display: inline-block;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .matrix-grid input {
+      display: inline-block;
+      width: 40px;
+      height: 30px;
+      margin: 2px;
+      text-align: center;
+      font-size: 16px;
+      border: 1px solid #B2D8CE;
+      background-color: #FB9E3A;
+      border-radius: 5px;
+    }
+
+    .output {
+      margin-top: 20px;
+      background: rgba(255, 255, 255, 0.3);
+      padding: 15px;
+      border-radius: 10px;
+      font-family: monospace;
+      color: #333;
+    }
+
+    pre {
+      font-size: 15px;
+      font-weight: bold;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+
+    label {
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>KALKULATOR MATRIKS</h1>
+  <h2>by SITI KHOTIJAH</h2>
+
+  <div class="container">
+    <div>
+      <label>Pilih Ukuran Matriks:</label>
+      <select id="matrixSize" onchange="generateMatrixInputs()">
+        <option value="2">2x2</option>
+        <option value="3" selected>3x3</option>
+        <option value="4">4x4</option>
+      </select>
+    </div>
+
+    <div class="matrix-input">
+      <label>Matriks A</label>
+      <div id="matrixAContainer"></div>
+    </div>
+
+    <div class="matrix-input">
+      <label>Matriks B</label>
+      <div id="matrixBContainer"></div>
+    </div>
+
+    <div>
+      <button onclick="tambah()">Penjumlahan</button>
+      <button onclick="kali()">Perkalian</button>
+      <button onclick="kurang()">Pengurangan</button>
+      <button onclick="bagi()">Pembagian</button>
+      <button onclick="transpose()">Transpose A</button>
+      <button onclick="determinan()">Determinan A</button>
+      <button onclick="invers()">Invers A</button>
+    </div>
+
+    <div class="output" id="output">
+      <pre>HASIL AKAN DITAMPILKAN DISINI: </pre>
+    </div>
+  </div>
+
+  <script>
+    function generateMatrixInputs() {
+      const size = parseInt(document.getElementById("matrixSize").value);
+      createMatrixGrid("matrixAContainer", "A", size);
+      createMatrixGrid("matrixBContainer", "B", size);
+    }
+
+    function createMatrixGrid(containerId, prefix, size) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = ''; // Bersihkan konten lama
+
+      const grid = document.createElement("div");
+      grid.className = "matrix-grid";
+      grid.style.gridTemplateColumns = "repeat(" + size + ", 1fr)";
+
+      for (let i = 0; i < size; i++) {
+        for (let j = 0; j < size; j++) {
+          const input = document.createElement("input");
+          input.type = "number";
+          input.id = prefix + "_" + i + "_" + j;
+          input.value = 0;
+          grid.appendChild(input);
+        }
+        grid.appendChild(document.createElement("br"));
+      }
+
+      container.appendChild(grid);
+    }
+
+    function parseMatrix(prefix) {
+      const size = parseInt(document.getElementById("matrixSize").value);
+      const matrix = [];
+      for (let i = 0; i < size; i++) {
+        const row = [];
+        for (let j = 0; j < size; j++) {
+          const val = document.getElementById(prefix + "_" + i + "_" + j).value;
+          row.push(Number(val) || 0);
+        }
+        matrix.push(row);
+      }
+      return matrix;
+    }
+
+    function formatMatrixPretty(matrix) {
+      var top = '⎡';
+      var mid = '⎢';
+      var bottom = '⎣';
+      var rightTop = '⎤';
+      var rightMid = '⎥';
+      var rightBottom = '⎦';
+      var result = "";
+
+      for (var i = 0; i < matrix.length; i++) {
+        var left = (i === 0) ? top : (i === matrix.length - 1) ? bottom : mid;
+        var right = (i === 0) ? rightTop : (i === matrix.length - 1) ? rightBottom : rightMid;
+        result += left + " " + matrix[i].join("\t") + " " + right + "\n";
+      }
+
+      return result.trim();
+    }
+
+    function tambah() {
+      var A = parseMatrix("A");
+      var B = parseMatrix("B");
+
+      if (A.length !== B.length || A[0].length !== B[0].length) {
+        return showOutput("Ukuran matriks tidak sama!");
+      }
+
+      var result = A.map(function(row, i) {
+        return row.map(function(val, j) {
+          return val + B[i][j];
+        });
+      });
+
+      showOutput("Hasil Penjumlahan:\n" + formatMatrixPretty(result));
+    }
+
+    function kali() {
+      var A = parseMatrix("A");
+      var B = parseMatrix("B");
+
+      if (A[0].length !== B.length) {
+        return showOutput("Jumlah kolom A harus sama dengan jumlah baris B!");
+      }
+
+      var result = A.map(function(row, i) {
+        return B[0].map(function(_, j) {
+          return row.reduce(function(sum, _, k) {
+            return sum + A[i][k] * B[k][j];
+          }, 0);
+        });
+      });
+
+      showOutput("Hasil Perkalian:\n" + formatMatrixPretty(result));
+    }
+    function kurang() {
+  var A = parseMatrix("A");
+  var B = parseMatrix("B");
+
+  if (A.length !== B.length || A[0].length !== B[0].length) {
+    return showOutput("Ukuran matriks tidak sama!");
+  }
+
+  var result = A.map(function(row, i) {
+    return row.map(function(val, j) {
+      return val - B[i][j];
+    });
+  });
+
+  showOutput("Hasil Pengurangan (A - B):\n" + formatMatrixPretty(result));
+}
+
+function bagi() {
+  var A = parseMatrix("A");
+  var B = parseMatrix("B");
+
+  if (A.length !== B.length || A[0].length !== B[0].length) {
+    return showOutput("Ukuran matriks tidak sama!");
+  }
+
+  var result = A.map(function(row, i) {
+    return row.map(function(val, j) {
+      if (B[i][j] === 0) {
+        return "∞"; // Atau tampilkan pesan error
+      } else {
+        return +(val / B[i][j]).toFixed(3);
+      }
+    });
+  });
+
+  showOutput("Hasil Pembagian (A ÷ B):\n" + formatMatrixPretty(result));
+}
+
+    function transpose() {
+      var A = parseMatrix("A");
+      var result = A[0].map(function(_, i) {
+        return A.map(function(row) {
+          return row[i];
+        });
+      });
+
+      showOutput("Hasil Transpose A:\n" + formatMatrixPretty(result));
+    }
+
+    function determinan() {
+      var A = parseMatrix("A");
+      if (A.length !== A[0].length) return showOutput("Matriks harus persegi!");
+
+      var det = determinantRecursive(A);
+      showOutput("Determinan Matriks A: " + det);
+    }
+
+    function determinantRecursive(m) {
+      if (m.length === 1) return m[0][0];
+      if (m.length === 2) return m[0][0] * m[1][1] - m[0][1] * m[1][0];
+
+      var det = 0;
+      for (var i = 0; i < m.length; i++) {
+        var minor = m.slice(1).map(function(row) {
+          return row.filter(function(_, j) {
+            return j !== i;
+          });
+        });
+        det += (i % 2 === 0 ? 1 : -1) * m[0][i] * determinantRecursive(minor);
+      }
+      return det;
+    }
+
+    function invers() {
+      var A = parseMatrix("A");
+      var n = A.length;
+      if (n !== A[0].length) return showOutput("Matriks harus persegi!");
+
+      var det = determinantRecursive(A);
+      if (det === 0) return showOutput("Matriks tidak memiliki invers (determinan = 0)");
+
+      var adjoint = A.map(function(row, i) {
+        return row.map(function(_, j) {
+          var minor = A.filter(function(_, r) {
+            return r !== i;
+          }).map(function(r) {
+            return r.filter(function(_, c) {
+              return c !== j;
+            });
+          });
+
+          var cofactor = determinantRecursive(minor) * ((i + j) % 2 === 0 ? 1 : -1);
+          return cofactor;
+        });
+      });
+
+      var transposeAdj = adjoint[0].map(function(_, i) {
+        return adjoint.map(function(row) {
+          return row[i];
+        });
+      });
+
+      var inverse = transposeAdj.map(function(row) {
+        return row.map(function(val) {
+          return +(val / det).toFixed(3);
+        });
+      });
+
+      showOutput("Invers Matriks A:\n" + formatMatrixPretty(inverse));
+    }
+
+    function showOutput(text) {
+      document.getElementById("output").innerHTML = "<pre>" + text + "</pre>";
+    }
+
+    // Jalankan otomatis saat halaman dibuka
+    window.onload = generateMatrixInputs;
+  </script>
+</body>
+</html>
